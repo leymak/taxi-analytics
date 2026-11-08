@@ -7,6 +7,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.IBinder;
 import android.view.Gravity;
@@ -14,6 +15,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class FloatingWidgetService extends Service {
@@ -49,7 +51,7 @@ public class FloatingWidgetService extends Service {
 
             Notification notification = new Notification.Builder(this, channelId)
                     .setContentTitle("Такси Аналитика")
-                    .setContentText("Виджет активен поверх Яндекс Про")
+                    .setContentText("Виджет активен")
                     .setSmallIcon(android.R.drawable.ic_menu_compass)
                     .build();
             startForeground(101, notification);
@@ -59,24 +61,49 @@ public class FloatingWidgetService extends Service {
     private void initFloatingWidget() {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setBackgroundColor(Color.parseColor("#E6212121"));
-        layout.setPadding(35, 25, 35, 25);
+        // Главный контейнер со скругленными углами и полупрозрачным фоном
+        LinearLayout mainLayout = new LinearLayout(this);
+        mainLayout.setOrientation(LinearLayout.VERTICAL);
+        
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.parseColor("#EE1E1E1E"));
+        bg.setCornerRadius(24f);
+        bg.setStroke(2, Color.parseColor("#444444"));
+        mainLayout.setBackground(bg);
+        mainLayout.setPadding(30, 20, 30, 25);
+
+        // Шапка: заголовок и кнопка закрытия [✕]
+        RelativeLayout header = new RelativeLayout(this);
 
         TextView title = new TextView(this);
-        title.setText("АНАЛИТИКА");
+        title.setText("АНАЛИТИКА ЗАКАЗА");
         title.setTextColor(Color.parseColor("#FFD600"));
-        title.setTextSize(13);
-        layout.addView(title);
+        title.setTextSize(12);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        header.addView(title);
 
+        TextView btnClose = new TextView(this);
+        btnClose.setText(" ✕ ");
+        btnClose.setTextColor(Color.parseColor("#AAAAAA"));
+        btnClose.setTextSize(16);
+        btnClose.setPadding(20, 0, 0, 0);
+        RelativeLayout.LayoutParams closeParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+        closeParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        btnClose.setLayoutParams(closeParams);
+        btnClose.setOnClickListener(v -> stopSelf());
+        header.addView(btnClose);
+
+        mainLayout.addView(header);
+
+        // Текстовый блок расчета
         TextView info = new TextView(this);
-        info.setId(View.generateViewId());
         info.setTag("widget_text");
-        info.setText("Ожидание заказа в Яндекс Про...");
+        info.setText("Ожидание карточки заказа...");
         info.setTextColor(Color.WHITE);
-        info.setTextSize(15);
-        layout.addView(info);
+        info.setTextSize(14);
+        info.setPadding(0, 10, 0, 0);
+        mainLayout.addView(info);
 
         int layoutType = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -90,10 +117,10 @@ public class FloatingWidgetService extends Service {
                 PixelFormat.TRANSLUCENT);
 
         params.gravity = Gravity.TOP | Gravity.START;
-        params.x = 80;
-        params.y = 200;
+        params.x = 60;
+        params.y = 220;
 
-        layout.setOnTouchListener(new View.OnTouchListener() {
+        mainLayout.setOnTouchListener(new View.OnTouchListener() {
             private int initialX, initialY;
             private float initialTouchX, initialTouchY;
 
@@ -116,15 +143,15 @@ public class FloatingWidgetService extends Service {
             }
         });
 
-        floatingView = layout;
+        floatingView = mainLayout;
         windowManager.addView(floatingView, params);
     }
 
-    public void updateData(String orderText) {
+    public void updateData(String text) {
         if (floatingView != null) {
             TextView info = floatingView.findViewWithTag("widget_text");
             if (info != null) {
-                info.setText(orderText);
+                info.setText(text);
             }
         }
     }
