@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Такси Аналитика</string>
+    <string name="accessibility_desc">Служба необходима для автоматического считывания параметров заказа с экрана Яндекс Про и вывода расчета чистой прибыли в плавающий виджет.</string>
+</resources>
